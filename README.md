@@ -27,7 +27,7 @@ Studio Ghibli Films Tracker - Acompanhe seus filmes favoritos do Studio Ghibli
 - **Estilização**: CSS-in-JS
 - **Gerenciamento de Estado**: React Hooks
 
-   ## 🚀 Como Executar
+## 🚀 Como Executar
 ```bash
 git clone https://github.com/Viniciusm15/studio-ghibli-tracker.git
 npm install
