@@ -504,12 +504,10 @@ function GhibliFilms({ toggleColorMode }) {
               }}>
                 <CardMedia
                   component="img"
-                  height="300"
                   image={film.image}
                   alt={film.title}
                   sx={{
                     objectFit: 'cover',
-                    height: 300,
                     transition: 'transform 0.5s ease',
                     '&:hover': {
                       transform: 'scale(1.05)'
