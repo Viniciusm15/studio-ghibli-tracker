@@ -2,28 +2,30 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { ThemeProvider, createTheme, useTheme, alpha } from '@mui/material/styles';
-import IconButton from '@mui/material/IconButton';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import CssBaseline from '@mui/material/CssBaseline';
+import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
 import CardMedia from '@mui/material/CardMedia';
 import CardContent from '@mui/material/CardContent';
 import CardActions from '@mui/material/CardActions';
-import Chip from '@mui/material/Chip';
-import Button from '@mui/material/Button';
-import Grid from '@mui/material/Grid';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import Select from '@mui/material/Select';
-import CssBaseline from '@mui/material/CssBaseline';
-import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
-import SearchIcon from '@mui/icons-material/Search';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Chip from '@mui/material/Chip';
 import Modal from '@mui/material/Modal';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 
 const FILMS_API = 'https://ghibliapi.vercel.app/films';
 const STORAGE_KEY = 'watched_films';
@@ -223,17 +225,70 @@ function GhibliFilms({ toggleColorMode }) {
                   Detalhes do Filme
                 </Typography>
 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                  <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                    <Box component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                      Produtor:
-                    </Box> {expandedFilm.producer}
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                    <Box component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                      Duração:
-                    </Box> {expandedFilm.running_time} minutos
-                  </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 1.5
+                  }}>
+                    <PersonOutlineIcon
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: 22,
+                        mt: '2px'
+                      }}
+                    />
+                    <Typography variant="body1" sx={{
+                      color: 'text.secondary',
+                      display: 'flex',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 0.5
+                    }}>
+                      <Box component="span" sx={{
+                        fontWeight: 600,
+                        color: 'text.primary',
+                        mr: 0.5
+                      }}>
+                        Produtor:
+                      </Box>
+                      {expandedFilm.producer}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 1.5
+                  }}>
+                    <AccessTimeIcon
+                      sx={{
+                        color: theme.palette.mode === 'dark'
+                          ? theme.palette.secondary.light
+                          : theme.palette.primary.dark,
+                        fontSize: 22,
+                        mt: '2px'
+                      }}
+                    />
+                    <Typography variant="body1" sx={{
+                      color: 'text.secondary',
+                      display: 'flex',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 0.5
+                    }}>
+                      <Box component="span" sx={{
+                        fontWeight: 600,
+                        color: 'text.primary',
+                        mr: 0.5
+                      }}>
+                        Duração:
+                      </Box>
+                      <Box component="span" sx={{ fontWeight: 500 }}>
+                        {expandedFilm.running_time} minutos
+                      </Box>
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
             </>
