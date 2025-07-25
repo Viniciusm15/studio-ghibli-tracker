@@ -13,21 +13,41 @@ Studio Ghibli Films Tracker - Acompanhe seus filmes favoritos do Studio Ghibli
 
 ## ✨ Funcionalidades
 
-- Catálogo completo de filmes do Studio Ghibli
-- Marcar filmes como assistidos/não assistidos
+### 🎬 Catálogo Completo
+- Listagem de todos os filmes do Studio Ghibli com capas, títulos e informações básicas
+- Cards interativos com efeitos visuais ao hover
+
+### 🔍 Sistema de Busca Avançado
+- Barra de pesquisa para filtrar filmes por título
 - Filtros por status (Todos/Assistidos/Não assistidos)
+- Ordenação por título (A-Z) ou data de lançamento
+
+### 📊 Acompanhamento de Progresso
+- Marcar filmes como assistidos/não assistidos
+- Contador de progresso (X de Y filmes assistidos)
+- Armazenamento local (localStorage) para salvar seu progresso
+
+### 🎨 Experiência Visual
 - Alternância entre tema claro e escuro
-- Progresso salvo automaticamente no localStorage
-- Design totalmente responsivo
-- Efeitos visuais e transições suaves
+- Modal de detalhes expandidos com informações completas do filme
+- Efeitos de gradiente e transições suaves
+- Design totalmente responsivo para todos os dispositivos
+
+### 📱 Detalhes dos Filmes
+- Modal dedicado com:
+  - Sinopse completa
+  - Informações detalhadas (diretor, produtor, duração, score)
+  - Visualização em tela cheia responsiva
 
 ## 🛠 Tecnologias
 
-- **Framework**: [Next.js 14](https://nextjs.org/)
-- **UI Components**: [Material-UI v5](https://mui.com/)
+- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
+- **UI Components**: [Material-UI v5](https://mui.com/) (MUI)
 - **API**: [Ghibli API](https://ghibliapi.vercel.app)
-- **Estilização**: CSS-in-JS
-- **Gerenciamento de Estado**: React Hooks
+- **Estilização**: CSS-in-JS com sx prop
+- **Gerenciamento de Estado**: React Hooks (useState, useEffect, useMemo)
+- **Tipografia**: Fonte Inter personalizada
+- **Efeitos Visuais**: Gradientes, sombras e transições CSS
 
 ## 🚀 Como Executar
 ```bash
