@@ -567,6 +567,7 @@ function GhibliFilms({ toggleColorMode }) {
                       color: 'text.secondary',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
+                      textAlign: 'justify',
                       display: '-webkit-box',
                       WebkitLineClamp: 4,
                       WebkitBoxOrient: 'vertical',
