@@ -16,7 +16,6 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
-import InputLabel from '@mui/material/InputLabel';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 
@@ -310,9 +309,9 @@ function GhibliFilms({ toggleColorMode }) {
                   </Typography>
                 </CardContent>
                 <CardActions sx={{
-                  px: 3,
-                  pb: 3,
-                  pt: 0
+                  px: 2,
+                  pb: 2,
+                  pt: 2
                 }}>
                   <Button
                     fullWidth

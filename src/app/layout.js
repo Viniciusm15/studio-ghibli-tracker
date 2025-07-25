@@ -1,5 +1,3 @@
-import "./globals.css";
-
 export const metadata = {
   title: 'Studio Ghibli Tracker',
   description: 'Acompanhe seus filmes do Studio Ghibli',
