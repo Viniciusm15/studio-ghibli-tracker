@@ -112,6 +112,7 @@ function GhibliFilms({ toggleColorMode }) {
               color: 'text.secondary',
               display: 'flex',
               alignItems: 'center',
+              paddingLeft: 2,
               gap: 1
             }}>
               <Box component="span" sx={{
@@ -191,7 +192,7 @@ function GhibliFilms({ toggleColorMode }) {
         alignItems: 'stretch',
         maxWidth: 'lg',
         margin: '0 auto',
-        px: { xs: 2, sm: 3 }
+        px: { xs: 2, sm: 0 }
       }}>
         {filteredFilms.length === 0 ? (
           <Grid item xs={12}>
@@ -223,7 +224,6 @@ function GhibliFilms({ toggleColorMode }) {
               <Card sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                width: '100%',
                 height: '100%',
                 minHeight: '550px',
                 borderRadius: 4,
