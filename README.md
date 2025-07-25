@@ -9,6 +9,8 @@ Studio Ghibli Films Tracker - Acompanhe seus filmes favoritos do Studio Ghibli
 
 **Uma aplicação web interativa** que permite explorar a filmografia completa do Studio Ghibli, marcar seus filmes assistidos e acompanhar seu progresso. Desenvolvido com Next.js e Material-UI, o projeto oferece uma experiência visual com tema escuro/claro, animações suaves e armazenamento local do seu progresso.
 
+**Acesse a aplicação:** [https://studio-ghibli-tracker-murex.vercel.app](https://studio-ghibli-tracker-murex.vercel.app)
+
 ## ✨ Funcionalidades
 
 - Catálogo completo de filmes do Studio Ghibli
