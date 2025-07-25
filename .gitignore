@@ -55,3 +55,4 @@ logs
 *.pem
 *.crt
 *.key
+.vercel
