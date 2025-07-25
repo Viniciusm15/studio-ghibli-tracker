@@ -26,18 +26,24 @@ import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import Rating from '@mui/material/Rating';
+import StarIcon from '@mui/icons-material/Star';
 
 const FILMS_API = 'https://ghibliapi.vercel.app/films';
-const STORAGE_KEY = 'watched_films';
+const STORAGE_KEY = 'ghibli_films_data';
 
 function GhibliFilms({ toggleColorMode }) {
   const theme = useTheme();
   const [films, setFilms] = useState([]);
   const [watched, setWatched] = useState(() => {
     if (typeof window !== 'undefined') {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      const savedData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      return {
+        watchedFilms: savedData.watchedFilms || [],
+        ratings: savedData.ratings || {}
+      };
     }
-    return [];
+    return { watchedFilms: [], ratings: {} };
   });
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,16 +64,39 @@ function GhibliFilms({ toggleColorMode }) {
   }, [watched]);
 
   const toggleWatched = (id) => {
-    setWatched(prev =>
-      prev.includes(id) ? prev.filter(filmId => filmId !== id) : [...prev, id]
-    );
+    setWatched(prev => {
+      const isWatched = prev.watchedFilms.includes(id);
+      const newWatchedFilms = isWatched
+        ? prev.watchedFilms.filter(filmId => filmId !== id)
+        : [...prev.watchedFilms, id];
+
+      const newRatings = { ...prev.ratings };
+      if (isWatched) {
+        delete newRatings[id];
+      }
+
+      return {
+        watchedFilms: newWatchedFilms,
+        ratings: newRatings
+      };
+    });
+  };
+
+  const updateRating = (id, rating) => {
+    setWatched(prev => ({
+      ...prev,
+      ratings: {
+        ...prev.ratings,
+        [id]: rating
+      }
+    }));
   };
 
   const filteredFilms = useMemo(() => {
     let result = films.filter((film) => {
       const matchesSearch = film.title.toLowerCase().includes(searchTerm.toLowerCase());
-      if (filter === 'watched') return watched.includes(film.id) && matchesSearch;
-      if (filter === 'unwatched') return !watched.includes(film.id) && matchesSearch;
+      if (filter === 'watched') return watched.watchedFilms.includes(film.id) && matchesSearch;
+      if (filter === 'unwatched') return !watched.watchedFilms.includes(film.id) && matchesSearch;
       return matchesSearch;
     });
 
@@ -77,6 +106,10 @@ function GhibliFilms({ toggleColorMode }) {
           return a.title.localeCompare(b.title);
         case 'release_date':
           return new Date(a.release_date) - new Date(b.release_date);
+        case 'rating':
+          const ratingA = watched.ratings[a.id] || 0;
+          const ratingB = watched.ratings[b.id] || 0;
+          return ratingB - ratingA;
         default:
           return 0;
       }
@@ -85,7 +118,7 @@ function GhibliFilms({ toggleColorMode }) {
     return result;
   }, [films, filter, watched, searchTerm, sortBy]);
 
-  const watchedCount = watched.length;
+  const watchedCount = watched.watchedFilms.length;
   const totalFilms = films.length;
 
   return (
@@ -193,6 +226,17 @@ function GhibliFilms({ toggleColorMode }) {
                     fontWeight: 500
                   }}
                 />
+                {watched.watchedFilms.includes(expandedFilm.id) && (
+                  <Chip
+                    label={`Sua avaliação: ${watched.ratings[expandedFilm.id] || 'Não avaliado'}`}
+                    variant="outlined"
+                    sx={{
+                      borderColor: alpha(theme.palette.secondary.main, 0.3),
+                      color: 'text.primary',
+                      fontWeight: 500
+                    }}
+                  />
+                )}
               </Box>
 
               <Typography
@@ -289,6 +333,32 @@ function GhibliFilms({ toggleColorMode }) {
                       </Box>
                     </Typography>
                   </Box>
+
+                  {watched.watchedFilms.includes(expandedFilm.id) && (
+                    <Box sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      mt: 2
+                    }}>
+                      <Typography variant="body1" sx={{
+                        fontWeight: 600,
+                        color: 'text.primary'
+                      }}>
+                        Sua avaliação:
+                      </Typography>
+                      <Rating
+                        name={`rating-${expandedFilm.id}`}
+                        value={watched.ratings[expandedFilm.id] || null}
+                        onChange={(event, newValue) => {
+                          updateRating(expandedFilm.id, newValue);
+                        }}
+                        precision={0.5}
+                        size="large"
+                        emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />}
+                      />
+                    </Box>
+                  )}
                 </Box>
               </Box>
             </>
@@ -445,6 +515,7 @@ function GhibliFilms({ toggleColorMode }) {
               >
                 <MenuItem value="title">Título (A-Z)</MenuItem>
                 <MenuItem value="release_date">Data de Lançamento</MenuItem>
+                <MenuItem value="rating">Avaliação</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -559,6 +630,24 @@ function GhibliFilms({ toggleColorMode }) {
                       📅 {film.release_date}
                     </Box>
                   </Typography>
+                  {watched.watchedFilms.includes(film.id) && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <Rating
+                        name={`simple-rating-${film.id}`}
+                        value={watched.ratings[film.id] || null}
+                        onChange={(event, newValue) => {
+                          updateRating(film.id, newValue);
+                        }}
+                        precision={0.5}
+                        size="small"
+                        readOnly={false}
+                        emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        {watched.ratings[film.id] ? `(${watched.ratings[film.id]}/5)` : '(Avalie)'}
+                      </Typography>
+                    </Box>
+                  )}
                   <Typography
                     variant="body2"
                     sx={{
@@ -590,7 +679,10 @@ function GhibliFilms({ toggleColorMode }) {
                 <CardActions sx={{
                   px: 2,
                   pb: 2,
-                  pt: 2
+                  pt: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1
                 }}>
                   <Button
                     fullWidth
@@ -603,7 +695,7 @@ function GhibliFilms({ toggleColorMode }) {
                       textTransform: 'none',
                       fontSize: '0.95rem',
                       letterSpacing: '0.5px',
-                      background: watched.includes(film.id)
+                      background: watched.watchedFilms.includes(film.id)
                         ? 'linear-gradient(45deg, #4CAF50, #2E7D32)'
                         : 'linear-gradient(45deg, #2196F3, #1976D2)',
                       boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
@@ -614,7 +706,7 @@ function GhibliFilms({ toggleColorMode }) {
                       transition: 'all 0.3s ease'
                     }}
                   >
-                    {watched.includes(film.id) ? '✅ Assistido' : '➕ Marcar como assistido'}
+                    {watched.watchedFilms.includes(film.id) ? '✅ Assistido' : '➕ Marcar como assistido'}
                   </Button>
                 </CardActions>
               </Card>
