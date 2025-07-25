@@ -11,6 +11,7 @@ import Card from '@mui/material/Card';
 import CardMedia from '@mui/material/CardMedia';
 import CardContent from '@mui/material/CardContent';
 import CardActions from '@mui/material/CardActions';
+import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
@@ -18,6 +19,11 @@ import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
+import SearchIcon from '@mui/icons-material/Search';
+import Modal from '@mui/material/Modal';
+import CloseIcon from '@mui/icons-material/Close';
 
 const FILMS_API = 'https://ghibliapi.vercel.app/films';
 const STORAGE_KEY = 'watched_films';
@@ -32,6 +38,9 @@ function GhibliFilms({ toggleColorMode }) {
     return [];
   });
   const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('title');
+  const [expandedFilm, setExpandedFilm] = useState(null);
 
   useEffect(() => {
     fetch(FILMS_API)
@@ -52,11 +61,27 @@ function GhibliFilms({ toggleColorMode }) {
     );
   };
 
-  const filteredFilms = films.filter((film) => {
-    if (filter === 'watched') return watched.includes(film.id);
-    if (filter === 'unwatched') return !watched.includes(film.id);
-    return true;
-  });
+  const filteredFilms = useMemo(() => {
+    let result = films.filter((film) => {
+      const matchesSearch = film.title.toLowerCase().includes(searchTerm.toLowerCase());
+      if (filter === 'watched') return watched.includes(film.id) && matchesSearch;
+      if (filter === 'unwatched') return !watched.includes(film.id) && matchesSearch;
+      return matchesSearch;
+    });
+
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'title':
+          return a.title.localeCompare(b.title);
+        case 'release_date':
+          return new Date(a.release_date) - new Date(b.release_date);
+        default:
+          return 0;
+      }
+    });
+
+    return result;
+  }, [films, filter, watched, searchTerm, sortBy]);
 
   const watchedCount = watched.length;
   const totalFilms = films.length;
@@ -70,6 +95,152 @@ function GhibliFilms({ toggleColorMode }) {
         : 'linear-gradient(to bottom, #f5f7fa, #e4e8f0)',
       minHeight: '100vh'
     }}>
+      <Modal
+        open={Boolean(expandedFilm)}
+        onClose={() => setExpandedFilm(null)}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 2,
+          backdropFilter: 'blur(4px)'
+        }}
+      >
+        <Box sx={{
+          maxWidth: 600,
+          width: '100%',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          bgcolor: theme.palette.mode === 'dark' ? 'background.default' : 'background.paper',
+          borderRadius: 4,
+          boxShadow: theme.shadows[10],
+          p: 4,
+          position: 'relative',
+          border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(0, 0, 0, 0.12)',
+          background: theme.palette.mode === 'dark'
+            ? 'linear-gradient(135deg, rgba(30,30,30,0.95), rgba(18,18,18,0.98))'
+            : 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(245,245,245,0.98))',
+          '&:focus': {
+            outline: 'none'
+          }
+        }}>
+          {expandedFilm && (
+            <>
+              <IconButton
+                onClick={() => setExpandedFilm(null)}
+                sx={{
+                  position: 'absolute',
+                  right: 16,
+                  top: 16,
+                  color: theme.palette.mode === 'dark' ? 'text.secondary' : 'text.primary',
+                  '&:hover': {
+                    color: theme.palette.primary.main,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1)
+                  }
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+
+              <Typography
+                variant="h3"
+                gutterBottom
+                sx={{
+                  fontWeight: 800,
+                  mb: 3,
+                  color: 'text.primary',
+                  background: 'linear-gradient(45deg, #6a11cb, #2575fc)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '-0.5px'
+                }}
+              >
+                {expandedFilm.title}
+              </Typography>
+
+              <Box sx={{
+                display: 'flex',
+                gap: 2,
+                mb: 4,
+                flexWrap: 'wrap'
+              }}>
+                <Chip
+                  label={`Diretor: ${expandedFilm.director}`}
+                  variant="outlined"
+                  sx={{
+                    borderColor: alpha(theme.palette.primary.main, 0.3),
+                    color: 'text.primary',
+                    fontWeight: 500
+                  }}
+                />
+                <Chip
+                  label={`Ano: ${expandedFilm.release_date}`}
+                  variant="outlined"
+                  sx={{
+                    borderColor: alpha(theme.palette.primary.main, 0.3),
+                    color: 'text.primary',
+                    fontWeight: 500
+                  }}
+                />
+                <Chip
+                  label={`Score: ${expandedFilm.rt_score}`}
+                  variant="outlined"
+                  sx={{
+                    borderColor: alpha(theme.palette.primary.main, 0.3),
+                    color: 'text.primary',
+                    fontWeight: 500
+                  }}
+                />
+              </Box>
+
+              <Typography
+                variant="body1"
+                sx={{
+                  color: 'text.secondary',
+                  lineHeight: 1.8,
+                  fontSize: '1.1rem',
+                  textAlign: 'justify',
+                  mb: 3
+                }}
+              >
+                {expandedFilm.description}
+              </Typography>
+
+              <Box sx={{
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                borderRadius: 2,
+                p: 3,
+                mb: 3
+              }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    mb: 2,
+                    color: 'text.primary'
+                  }}
+                >
+                  Detalhes do Filme
+                </Typography>
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                    <Box component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                      Produtor:
+                    </Box> {expandedFilm.producer}
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                    <Box component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                      Duração:
+                    </Box> {expandedFilm.running_time} minutos
+                  </Typography>
+                </Box>
+              </Box>
+            </>
+          )}
+        </Box>
+      </Modal>
+
       <Box sx={{
         mb: 4,
         maxWidth: 'lg',
@@ -83,7 +254,7 @@ function GhibliFilms({ toggleColorMode }) {
           gap: 2,
           p: 2,
           borderRadius: 2,
-          backdropFilter: 'blur(px)',
+          backdropFilter: 'blur(8px)',
           background: alpha(theme.palette.background.paper, 0.8),
           boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -95,7 +266,7 @@ function GhibliFilms({ toggleColorMode }) {
               sx={{
                 fontWeight: 800,
                 color: 'text.primary',
-                background:'linear-gradient(45deg, #6a11cb, #2575fc)',
+                background: 'linear-gradient(45deg, #6a11cb, #2575fc)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 mb: 1,
@@ -112,11 +283,7 @@ function GhibliFilms({ toggleColorMode }) {
               paddingLeft: 2,
               gap: 1
             }}>
-              <Box component="span" sx={{
-                fontWeight: 600,
-                color: 'primary.main',
-                fontSize: '1.1rem'
-              }}>
+              <Box component="span" sx={{ fontWeight: 600 }}>
                 {watchedCount}
               </Box>
               de
@@ -144,44 +311,89 @@ function GhibliFilms({ toggleColorMode }) {
           </IconButton>
         </Box>
 
-        <Typography variant="h6" sx={{
-          fontWeight: 600,
-          color: 'text.primary',
-          whiteSpace: 'nowrap'
-        }}>
-          Filtrar
-        </Typography>
-
-        <FormControl fullWidth>
-          <Select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+        <Box sx={{ display: 'flex', gap: 2, mb: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Pesquisar filmes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             sx={{
-              color: 'text.primary',
-              borderRadius: 3,
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: alpha(theme.palette.primary.main, 0.3),
-                borderWidth: 2
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: theme.palette.primary.main,
-              },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: theme.palette.primary.main,
-                boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}`
-              },
-              '& .MuiSvgIcon-root': {
-                color: 'text.primary',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 3,
+                bgcolor: alpha(theme.palette.background.paper, 0.8)
               }
             }}
-            displayEmpty
-            inputProps={{ 'aria-label': 'Filtrar filmes' }}
-          >
-            <MenuItem value="all">Todos ({totalFilms})</MenuItem>
-            <MenuItem value="watched">Assistidos ({watchedCount})</MenuItem>
-            <MenuItem value="unwatched">Não assistidos ({totalFilms - watchedCount})</MenuItem>
-          </Select>
-        </FormControl>
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <Box sx={{ display: 'flex', gap: 2, width: { xs: '100%', sm: 'auto' } }}>
+            <FormControl sx={{ minWidth: 120 }}>
+              <Select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                sx={{
+                  color: 'text.primary',
+                  borderRadius: 3,
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: alpha(theme.palette.primary.main, 0.3),
+                    borderWidth: 2
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: theme.palette.primary.main,
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: theme.palette.primary.main,
+                    boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}`
+                  },
+                  '& .MuiSvgIcon-root': {
+                    color: 'text.primary',
+                  }
+                }}
+                displayEmpty
+                inputProps={{ 'aria-label': 'Filtrar filmes' }}
+              >
+                <MenuItem value="all">Todos ({totalFilms})</MenuItem>
+                <MenuItem value="watched">Assistidos ({watchedCount})</MenuItem>
+                <MenuItem value="unwatched">Não assistidos ({totalFilms - watchedCount})</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl sx={{ minWidth: 120 }}>
+              <Select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                sx={{
+                  color: 'text.primary',
+                  borderRadius: 3,
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: alpha(theme.palette.primary.main, 0.3),
+                    borderWidth: 2
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: theme.palette.primary.main,
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: theme.palette.primary.main,
+                    boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}`
+                  },
+                  '& .MuiSvgIcon-root': {
+                    color: 'text.primary',
+                  }
+                }}
+              >
+                <MenuItem value="title">Título (A-Z)</MenuItem>
+                <MenuItem value="release_date">Data de Lançamento</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </Box>
       </Box>
 
       <Grid container spacing={{ xs: 2, md: 3, lg: 4 }} sx={{
@@ -254,9 +466,12 @@ function GhibliFilms({ toggleColorMode }) {
                   display: 'flex',
                   flexDirection: 'column',
                   p: 3,
-                  background: theme.palette.mode === 'dark'
-                    ? 'linear-gradient(to bottom, rgba(30,30,30,0.7), rgba(18,18,18,0.9))'
-                    : 'linear-gradient(to bottom, rgba(255,255,255,0.7), rgba(245,245,245,0.9))'
+                  bgcolor: theme.palette.mode === 'dark'
+                    ? alpha(theme.palette.background.paper, 0.9)
+                    : alpha(theme.palette.background.paper, 0.95),
+                  borderBottom: theme.palette.mode === 'dark'
+                    ? '1px solid rgba(255, 255, 255, 0.12)'
+                    : '1px solid rgba(0, 0, 0, 0.12)'
                 }}>
                   <Typography
                     variant="h5"
@@ -300,11 +515,23 @@ function GhibliFilms({ toggleColorMode }) {
                       display: '-webkit-box',
                       WebkitLineClamp: 4,
                       WebkitBoxOrient: 'vertical',
-                      lineHeight: 1.6
+                      lineHeight: 1.6,
+                      mb: 1
                     }}
                   >
                     {film.description}
                   </Typography>
+                  <Button
+                    onClick={() => setExpandedFilm(film)}
+                    size="small"
+                    sx={{
+                      alignSelf: 'flex-start',
+                      mt: 'auto',
+                      textTransform: 'none',
+                    }}
+                  >
+                    Ver detalhes completos
+                  </Button>
                 </CardContent>
                 <CardActions sx={{
                   px: 2,
