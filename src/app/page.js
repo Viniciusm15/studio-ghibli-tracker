@@ -1,69 +1,170 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { ThemeProvider, createTheme, useTheme, alpha } from '@mui/material/styles';
-import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import CssBaseline from '@mui/material/CssBaseline';
-import Grid from '@mui/material/Grid';
-import Card from '@mui/material/Card';
-import CardMedia from '@mui/material/CardMedia';
-import CardContent from '@mui/material/CardContent';
-import CardActions from '@mui/material/CardActions';
-import TextField from '@mui/material/TextField';
-import InputAdornment from '@mui/material/InputAdornment';
-import FormControl from '@mui/material/FormControl';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Chip from '@mui/material/Chip';
-import Modal from '@mui/material/Modal';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
-import SearchIcon from '@mui/icons-material/Search';
-import CloseIcon from '@mui/icons-material/Close';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import Rating from '@mui/material/Rating';
-import StarIcon from '@mui/icons-material/Star';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import {
+  ThemeProvider,
+  createTheme,
+  useTheme,
+  alpha,
+  styled
+} from '@mui/material/styles';
+import {
+  Container,
+  Typography,
+  Box,
+  CssBaseline,
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
+  CardActions,
+  TextField,
+  InputAdornment,
+  FormControl,
+  Select,
+  MenuItem,
+  Button,
+  IconButton,
+  Chip,
+  Modal,
+  Rating
+} from '@mui/material';
+import {
+  Brightness4 as Brightness4Icon,
+  Brightness7 as Brightness7Icon,
+  Search as SearchIcon,
+  Close as CloseIcon,
+  AccessTime as AccessTimeIcon,
+  PersonOutline as PersonOutlineIcon,
+  Star as StarIcon
+} from '@mui/icons-material';
 
 const FILMS_API = 'https://ghibliapi.vercel.app/films';
 const STORAGE_KEY = 'ghibli_films_data';
 
+const GradientText = styled(Typography)(({ theme }) => ({
+  background: 'linear-gradient(45deg, #6a11cb, #2575fc)',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  fontWeight: 800,
+  letterSpacing: '-0.5px'
+}));
+
+const StyledCard = styled(Card)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+  minHeight: '550px',
+  borderRadius: 16,
+  transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+  backgroundColor: alpha(theme.palette.background.paper, 0.8),
+  backdropFilter: 'blur(12px)',
+  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
+  overflow: 'hidden',
+  '&:hover': {
+    transform: 'translateY(-8px)',
+    boxShadow: `0 12px 28px 0 ${alpha(theme.palette.primary.main, 0.2)}`
+  }
+}));
+
+const DetailModal = styled(Modal)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: theme.spacing(2),
+  backdropFilter: 'blur(4px)'
+}));
+
+const ModalContent = styled(Box)(({ theme }) => ({
+  maxWidth: 600,
+  width: '100%',
+  maxHeight: '90vh',
+  overflow: 'auto',
+  backgroundColor: theme.palette.mode === 'dark' ?
+    alpha(theme.palette.background.default, 0.95) :
+    alpha(theme.palette.background.paper, 0.95),
+  borderRadius: 16,
+  boxShadow: theme.shadows[10],
+  padding: theme.spacing(4),
+  position: 'relative',
+  border: `1px solid ${alpha(
+    theme.palette.mode === 'dark' ?
+      theme.palette.common.white :
+      theme.palette.common.black,
+    0.12
+  )}`,
+  background: theme.palette.mode === 'dark'
+    ? 'linear-gradient(135deg, rgba(30,30,30,0.95), rgba(18,18,18,0.98))'
+    : 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(245,245,245,0.98))',
+  '&:focus': {
+    outline: 'none'
+  }
+}));
+
+const useLocalStorage = (key, initialValue) => {
+  const [storedValue, setStoredValue] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const item = window.localStorage.getItem(key);
+        return item ? JSON.parse(item) : initialValue;
+      }
+      return initialValue;
+    } catch (error) {
+      console.error('Error reading from localStorage:', error);
+      return initialValue;
+    }
+  });
+
+  const setValue = (value) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      }
+    } catch (error) {
+      console.error('Error writing to localStorage:', error);
+    }
+  };
+
+  return [storedValue, setValue];
+};
+
 function GhibliFilms({ toggleColorMode }) {
   const theme = useTheme();
   const [films, setFilms] = useState([]);
-  const [watched, setWatched] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const savedData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-      return {
-        watchedFilms: savedData.watchedFilms || [],
-        ratings: savedData.ratings || {}
-      };
-    }
-    return { watchedFilms: [], ratings: {} };
+  const [watched, setWatched] = useLocalStorage(STORAGE_KEY, {
+    watchedFilms: [],
+    ratings: {}
   });
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('title');
   const [expandedFilm, setExpandedFilm] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch(FILMS_API)
-      .then(res => res.json())
-      .then(data => setFilms(data))
-      .catch(error => console.error('Error fetching films:', error));
+    const fetchFilms = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(FILMS_API);
+        if (!response.ok) throw new Error('Failed to fetch films');
+        const data = await response.json();
+        setFilms(data);
+      } catch (err) {
+        console.error('Error fetching films:', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFilms();
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(watched));
-    }
-  }, [watched]);
-
-  const toggleWatched = (id) => {
+  const toggleWatched = useCallback((id) => {
     setWatched(prev => {
       const isWatched = prev.watchedFilms.includes(id);
       const newWatchedFilms = isWatched
@@ -80,9 +181,9 @@ function GhibliFilms({ toggleColorMode }) {
         ratings: newRatings
       };
     });
-  };
+  }, [setWatched]);
 
-  const updateRating = (id, rating) => {
+  const updateRating = useCallback((id, rating) => {
     setWatched(prev => ({
       ...prev,
       ratings: {
@@ -90,9 +191,11 @@ function GhibliFilms({ toggleColorMode }) {
         [id]: rating
       }
     }));
-  };
+  }, [setWatched]);
 
   const filteredFilms = useMemo(() => {
+    if (!films) return [];
+
     let result = films.filter((film) => {
       const matchesSearch = film.title.toLowerCase().includes(searchTerm.toLowerCase());
       if (filter === 'watched') return watched.watchedFilms.includes(film.id) && matchesSearch;
@@ -121,6 +224,42 @@ function GhibliFilms({ toggleColorMode }) {
   const watchedCount = watched.watchedFilms.length;
   const totalFilms = films.length;
 
+  if (isLoading) {
+    return (
+      <Container maxWidth={false} sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        background: theme.palette.mode === 'dark'
+          ? 'linear-gradient(to bottom, #121212, #1e1e1e)'
+          : 'linear-gradient(to bottom, #f5f7fa, #e4e8f0)'
+      }}>
+        <Typography variant="h6" color="text.secondary">
+          Carregando filmes...
+        </Typography>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth={false} sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        background: theme.palette.mode === 'dark'
+          ? 'linear-gradient(to bottom, #121212, #1e1e1e)'
+          : 'linear-gradient(to bottom, #f5f7fa, #e4e8f0)'
+      }}>
+        <Typography variant="h6" color="error">
+          Erro ao carregar filmes: {error}
+        </Typography>
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth={false} sx={{
       py: 4,
@@ -130,35 +269,11 @@ function GhibliFilms({ toggleColorMode }) {
         : 'linear-gradient(to bottom, #f5f7fa, #e4e8f0)',
       minHeight: '100vh'
     }}>
-      <Modal
+      <DetailModal
         open={Boolean(expandedFilm)}
         onClose={() => setExpandedFilm(null)}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: 2,
-          backdropFilter: 'blur(4px)'
-        }}
       >
-        <Box sx={{
-          maxWidth: 600,
-          width: '100%',
-          maxHeight: '90vh',
-          overflow: 'auto',
-          bgcolor: theme.palette.mode === 'dark' ? 'background.default' : 'background.paper',
-          borderRadius: 4,
-          boxShadow: theme.shadows[10],
-          p: 4,
-          position: 'relative',
-          border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(0, 0, 0, 0.12)',
-          background: theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, rgba(30,30,30,0.95), rgba(18,18,18,0.98))'
-            : 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(245,245,245,0.98))',
-          '&:focus': {
-            outline: 'none'
-          }
-        }}>
+        <ModalContent>
           {expandedFilm && (
             <>
               <IconButton
@@ -177,28 +292,11 @@ function GhibliFilms({ toggleColorMode }) {
                 <CloseIcon />
               </IconButton>
 
-              <Typography
-                variant="h3"
-                gutterBottom
-                sx={{
-                  fontWeight: 800,
-                  mb: 3,
-                  color: 'text.primary',
-                  background: 'linear-gradient(45deg, #6a11cb, #2575fc)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  letterSpacing: '-0.5px'
-                }}
-              >
+              <GradientText variant="h3" gutterBottom sx={{ mb: 3 }}>
                 {expandedFilm.title}
-              </Typography>
+              </GradientText>
 
-              <Box sx={{
-                display: 'flex',
-                gap: 2,
-                mb: 4,
-                flexWrap: 'wrap'
-              }}>
+              <Box sx={{ display: 'flex', gap: 2, mb: 4, flexWrap: 'wrap' }}>
                 <Chip
                   label={`Diretor: ${expandedFilm.director}`}
                   variant="outlined"
@@ -258,74 +356,31 @@ function GhibliFilms({ toggleColorMode }) {
                 p: 3,
                 mb: 3
               }}>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: 700,
-                    mb: 2,
-                    color: 'text.primary'
-                  }}
-                >
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 2, color: 'text.primary' }}>
                   Detalhes do Filme
                 </Typography>
 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 1.5
-                  }}>
-                    <PersonOutlineIcon
-                      sx={{
-                        color: 'text.secondary',
-                        fontSize: 22,
-                        mt: '2px'
-                      }}
-                    />
-                    <Typography variant="body1" sx={{
-                      color: 'text.secondary',
-                      display: 'flex',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: 0.5
-                    }}>
-                      <Box component="span" sx={{
-                        fontWeight: 600,
-                        color: 'text.primary',
-                        mr: 0.5
-                      }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                    <PersonOutlineIcon sx={{ color: 'text.secondary', fontSize: 22, mt: '2px' }} />
+                    <Typography variant="body1" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
+                      <Box component="span" sx={{ fontWeight: 600, color: 'text.primary', mr: 0.5 }}>
                         Produtor:
                       </Box>
                       {expandedFilm.producer}
                     </Typography>
                   </Box>
 
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 1.5
-                  }}>
-                    <AccessTimeIcon
-                      sx={{
-                        color: theme.palette.mode === 'dark'
-                          ? theme.palette.secondary.light
-                          : theme.palette.primary.dark,
-                        fontSize: 22,
-                        mt: '2px'
-                      }}
-                    />
-                    <Typography variant="body1" sx={{
-                      color: 'text.secondary',
-                      display: 'flex',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: 0.5
-                    }}>
-                      <Box component="span" sx={{
-                        fontWeight: 600,
-                        color: 'text.primary',
-                        mr: 0.5
-                      }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                    <AccessTimeIcon sx={{
+                      color: theme.palette.mode === 'dark'
+                        ? theme.palette.secondary.light
+                        : theme.palette.primary.dark,
+                      fontSize: 22,
+                      mt: '2px'
+                    }} />
+                    <Typography variant="body1" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
+                      <Box component="span" sx={{ fontWeight: 600, color: 'text.primary', mr: 0.5 }}>
                         Duração:
                       </Box>
                       <Box component="span" sx={{ fontWeight: 500 }}>
@@ -335,16 +390,8 @@ function GhibliFilms({ toggleColorMode }) {
                   </Box>
 
                   {watched.watchedFilms.includes(expandedFilm.id) && (
-                    <Box sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      mt: 2
-                    }}>
-                      <Typography variant="body1" sx={{
-                        fontWeight: 600,
-                        color: 'text.primary'
-                      }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
+                      <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.primary' }}>
                         Sua avaliação:
                       </Typography>
                       <Rating
@@ -363,14 +410,10 @@ function GhibliFilms({ toggleColorMode }) {
               </Box>
             </>
           )}
-        </Box>
-      </Modal>
+        </ModalContent>
+      </DetailModal>
 
-      <Box sx={{
-        mb: 4,
-        maxWidth: 'lg',
-        mx: 'auto'
-      }}>
+      <Box sx={{ mb: 4, maxWidth: 'lg', mx: 'auto' }}>
         <Box sx={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -386,20 +429,9 @@ function GhibliFilms({ toggleColorMode }) {
           mb: 3
         }}>
           <Box sx={{ textAlign: { xs: 'center', sm: 'left' }, flex: 1 }}>
-            <Typography
-              variant="h2"
-              sx={{
-                fontWeight: 800,
-                color: 'text.primary',
-                background: 'linear-gradient(45deg, #6a11cb, #2575fc)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                mb: 1,
-                letterSpacing: '-0.5px'
-              }}
-            >
+            <GradientText variant="h2" sx={{ mb: 1 }}>
               🎥 Filmes do Studio Ghibli
-            </Typography>
+            </GradientText>
 
             <Typography variant="subtitle1" sx={{
               color: 'text.secondary',
@@ -538,13 +570,7 @@ function GhibliFilms({ toggleColorMode }) {
               background: alpha(theme.palette.background.paper, 0.7),
               backdropFilter: 'blur(10px)'
             }}>
-              <Typography
-                variant="h6"
-                sx={{
-                  color: 'text.secondary',
-                  fontStyle: 'italic'
-                }}
-              >
+              <Typography variant="h6" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
                 Nenhum filme encontrado.
               </Typography>
             </Box>
@@ -556,28 +582,13 @@ function GhibliFilms({ toggleColorMode }) {
               minHeight: '100%',
               maxWidth: { md: 'calc(100%/3 - 32px)' }
             }}>
-              <Card sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                height: '100%',
-                minHeight: '550px',
-                borderRadius: 4,
-                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                bgcolor: alpha(theme.palette.background.paper, 0.8),
-                backdropFilter: 'blur(12px)',
-                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-8px)',
-                  boxShadow: `0 12px 28px 0 ${alpha(theme.palette.primary.main, 0.2)}`
-                }
-              }}>
+              <StyledCard>
                 <CardMedia
                   component="img"
                   image={film.image}
                   alt={film.title}
                   sx={{
+                    height: 300,
                     objectFit: 'cover',
                     transition: 'transform 0.5s ease',
                     '&:hover': {
@@ -593,36 +604,18 @@ function GhibliFilms({ toggleColorMode }) {
                   bgcolor: theme.palette.mode === 'dark'
                     ? alpha(theme.palette.background.paper, 0.9)
                     : alpha(theme.palette.background.paper, 0.95),
-                  borderBottom: theme.palette.mode === 'dark'
-                    ? '1px solid rgba(255, 255, 255, 0.12)'
-                    : '1px solid rgba(0, 0, 0, 0.12)'
+                  borderBottom: `1px solid ${alpha(
+                    theme.palette.mode === 'dark' ?
+                      theme.palette.common.white :
+                      theme.palette.common.black,
+                    0.12
+                  )}`
                 }}>
-                  <Typography
-                    variant="h5"
-                    gutterBottom
-                    sx={{
-                      fontWeight: 700,
-                      color: 'text.primary',
-                      mb: 2,
-                      lineHeight: 1.3
-                    }}
-                  >
+                  <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, mb: 2, lineHeight: 1.3 }}>
                     {film.title}
                   </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{
-                      mb: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1
-                    }}
-                  >
-                    <Box component="span" sx={{
-                      color: 'primary.main',
-                      fontWeight: 500
-                    }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box component="span" sx={{ color: 'primary.main', fontWeight: 500 }}>
                       🎬 {film.director}
                     </Box>
                     <Box component="span">—</Box>
@@ -676,14 +669,7 @@ function GhibliFilms({ toggleColorMode }) {
                     Ver detalhes completos
                   </Button>
                 </CardContent>
-                <CardActions sx={{
-                  px: 2,
-                  pb: 2,
-                  pt: 2,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 1
-                }}>
+                <CardActions sx={{ px: 2, pb: 2, pt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Button
                     fullWidth
                     variant="contained"
@@ -709,7 +695,7 @@ function GhibliFilms({ toggleColorMode }) {
                     {watched.watchedFilms.includes(film.id) ? '✅ Assistido' : '➕ Marcar como assistido'}
                   </Button>
                 </CardActions>
-              </Card>
+              </StyledCard>
             </Grid>
           ))
         )}
@@ -721,36 +707,27 @@ function GhibliFilms({ toggleColorMode }) {
 export default function ToggleColorMode() {
   const [mode, setMode] = useState('light');
 
-  const colorMode = useMemo(
-    () => ({
-      toggleColorMode: () => {
-        setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
-      },
-    }),
-    [],
-  );
+  const colorMode = useMemo(() => ({
+    toggleColorMode: () => {
+      setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+    },
+  }), []);
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode,
-          ...(mode === 'light'
-            ? {
-              primary: { main: '#1976D2' },
-              secondary: { main: '#9C27B0' },
-            }
-            : {
-              primary: { main: '#90CAF9' },
-              secondary: { main: '#CE93D8' },
-            }),
-        },
-        typography: {
-          fontFamily: '"Inter", "Helvetica", "Arial", sans-serif',
-        },
+  const theme = useMemo(() => createTheme({
+    palette: {
+      mode,
+      ...(mode === 'light' ? {
+        primary: { main: '#1976D2' },
+        secondary: { main: '#9C27B0' },
+      } : {
+        primary: { main: '#90CAF9' },
+        secondary: { main: '#CE93D8' },
       }),
-    [mode],
-  );
+    },
+    typography: {
+      fontFamily: '"Inter", "Helvetica", "Arial", sans-serif',
+    },
+  }), [mode]);
 
   return (
     <ThemeProvider theme={theme}>
