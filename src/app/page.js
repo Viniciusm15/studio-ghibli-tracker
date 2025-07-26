@@ -41,7 +41,8 @@ import {
   PersonPin as PersonPinIcon,
   CalendarToday as CalendarTodayIcon,
   StarBorder as StarBorderIcon,
-  RateReview as RateReviewIcon
+  RateReview as RateReviewIcon,
+  Favorite as FavoriteIcon
 } from '@mui/icons-material';
 
 const BACKGROUND_IMAGES = {
@@ -889,6 +890,25 @@ function GhibliFilms({ toggleColorMode }) {
             ))
           )}
         </Grid>
+      </Box>
+
+      <Box sx={{
+        position: 'relative',
+        zIndex: 1,
+        mt: 4,
+        py: 3,
+        textAlign: 'center',
+        color: 'text.secondary',
+        fontSize: '0.9rem',
+        backdropFilter: 'blur(8px)',
+      }}>
+        <Typography variant="body2" component="div">
+          Built with love (and a bit of caffeine) by Vini & Vic <FavoriteIcon fontSize="small" sx={{
+            color: theme.palette.mode === 'dark' ? '#ff6b6b' : '#ff4757',
+            verticalAlign: 'middle',
+            ml: 0.5
+          }} />
+        </Typography>
       </Box>
     </Container>
   );
