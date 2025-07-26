@@ -33,6 +33,12 @@ Studio Ghibli Films Tracker - Acompanhe seus filmes favoritos do Studio Ghibli
 - Efeitos de gradiente e transições suaves
 - Design totalmente responsivo para todos os dispositivos
 
+### ⭐ Sistema de Avaliação
+- Avalie filmes com notas de 0.5 a 5 estrelas
+- Visualização rápida da sua avaliação nos cards dos filmes
+- Filtro por avaliação (ordenação)
+- Suas avaliações são salvas localmente
+
 ### 📱 Detalhes dos Filmes
 - Modal dedicado com:
   - Sinopse completa
