@@ -429,8 +429,8 @@ function GhibliFilms({ toggleColorMode }) {
           mb: 3
         }}>
           <Box sx={{ textAlign: { xs: 'center', sm: 'left' }, flex: 1 }}>
-            <GradientText variant="h2" sx={{ mb: 1 }}>
-              🎥 Filmes do Studio Ghibli
+            <GradientText variant="h2" sx={{ mb: 2, paddingLeft: 2 }} >
+              Filmes do Studio Ghibli
             </GradientText>
 
             <Typography variant="subtitle1" sx={{
@@ -588,7 +588,6 @@ function GhibliFilms({ toggleColorMode }) {
                   image={film.image}
                   alt={film.title}
                   sx={{
-                    height: 300,
                     objectFit: 'cover',
                     transition: 'transform 0.5s ease',
                     '&:hover': {
