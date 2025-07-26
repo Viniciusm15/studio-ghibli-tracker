@@ -86,15 +86,16 @@ const StyledCard = styled(Card)(({ theme }) => ({
 
 const DetailModal = styled(Modal)(({ theme }) => ({
   display: 'flex',
-  alignItems: 'center',
+  alignItems: 'flex-start',
   justifyContent: 'center',
   padding: theme.spacing(2),
   backdropFilter: 'blur(8px)',
-  backgroundColor: alpha(theme.palette.background.default, 0.8)
+  backgroundColor: alpha(theme.palette.background.default, 0.8),
+  overflow: 'auto',
 }));
 
 const ModalContent = styled(Box)(({ theme }) => ({
-  maxWidth: 600,
+  maxWidth: '90vw',
   width: '100%',
   maxHeight: '90vh',
   overflow: 'auto',
@@ -104,7 +105,20 @@ const ModalContent = styled(Box)(({ theme }) => ({
   padding: theme.spacing(4),
   position: 'relative',
   border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
-  '&:focus': { outline: 'none' }
+  margin: '20px 0',
+  '&:focus': { outline: 'none' },
+  [theme.breakpoints.down('sm')]: {
+    maxWidth: '95vw',
+    padding: theme.spacing(2),
+    '& .MuiTypography-h3': {
+      fontSize: '1.5rem',
+      pr: 0
+    },
+    '& .MuiRating-root': {
+      transform: 'scale(0.8)',
+      transformOrigin: 'left center'
+    }
+  }
 }));
 
 const useLocalStorage = (key, initialValue) => {
@@ -339,7 +353,11 @@ function GhibliFilms({ toggleColorMode }) {
             onClick={(e) => e.stopPropagation()}
           >
             {expandedFilm && (
-              <>
+              <Box sx={{
+                minWidth: 'min-content',
+                width: '100%',
+                overflow: 'visible'
+              }}>
                 <IconButton
                   onClick={(e) => {
                     e.stopPropagation();
@@ -553,7 +571,9 @@ function GhibliFilms({ toggleColorMode }) {
                           gap: 2,
                           mt: 2,
                           pt: 2,
-                          borderTop: `1px solid ${alpha(theme.palette.divider, 0.2)}`
+                          borderTop: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+                          flexWrap: 'wrap',
+                          minWidth: 'min-content'
                         }}>
                           <Typography variant="body1" sx={{
                             fontWeight: 600,
@@ -562,28 +582,30 @@ function GhibliFilms({ toggleColorMode }) {
                           }}>
                             Sua avaliação:
                           </Typography>
-                          <Rating
-                            name={`rating-${expandedFilm.id}`}
-                            value={watched.ratings[expandedFilm.id] || null}
-                            onChange={(event, newValue) => updateRating(expandedFilm.id, newValue)}
-                            precision={0.5}
-                            size="large"
-                            emptyIcon={
-                              <StarIcon
-                                style={{
-                                  opacity: 0.55,
-                                  filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))'
-                                }}
-                                fontSize="inherit"
-                              />
-                            }
-                          />
+                          <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            minWidth: 'min-content'
+                          }}>
+                            <Rating
+                              name={`modal-rating-${expandedFilm.id}`}
+                              value={watched.ratings[expandedFilm.id] || 0}
+                              onChange={(event, newValue) => updateRating(expandedFilm.id, newValue)}
+                              precision={0.5}
+                              size="large"
+                              sx={{
+                                '& .MuiRating-iconEmpty': {
+                                  color: theme.palette.mode === 'dark' ? '#4A4A4A' : '#E0E0E0'
+                                }
+                              }}
+                            />
+                          </Box>
                         </Box>
                       )}
                     </Box>
                   </Box>
                 </Box>
-              </>
+              </Box>
             )}
           </ModalContent>
         </DetailModal>
